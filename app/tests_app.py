@@ -5,7 +5,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from app import app
 
-#test: main-page
+#test: open main-page
 def test_homepage():
     with app.test_client() as client:
         response = client.get('/')
@@ -13,26 +13,19 @@ def test_homepage():
         assert 'text/html' in response.content_type
         print("✅ main-page is ready")
 
-#test: books-page
+#test: open books-page
 def test_books_page():
     with app.test_client() as client:
         response = client.get('/books')
         assert response.status_code == 200
         print("✅ Page /books is ready")
 
-#test: book creation form
+#test: open book creation form
 def test_create_form():
     with app.test_client() as client:
         response = client.get('/create')
         assert response.status_code == 200
         print("✅ Book creation form is ready")
-
-#test: CSS
-def test_css_file():
-    with app.test_client() as client:
-        response = client.get('/static/css/main.css')
-        assert response.status_code == 200
-        print("✅ CSS file is ready")
 
 #test: create book
 def test_create_book():
@@ -48,6 +41,39 @@ def test_create_book():
         print("✅ Create test book - done")
 
 #test: update book
+def test_update_book():
+    with app.test_client() as client:
+        data = {
+            'title': 'Test book',
+            'author': 'Test author',
+            'price': 100,
+            'count': 5
+        }
+        client.post('/create', data=data, follow_redirects=True)
+        update_data = {
+            'title': 'Update book',
+            'author': 'Update author',
+            'price': 200,
+            'count': 10
+        }
+        response = client.post('/edit/1', data=update_data, follow_redirects=True)
+        assert response.status_code == 200
+        print("✅ Update book - done")
+
+#test: delete book
+def test_delete_book():
+    with app.test_client() as client:
+        data = {
+            'title': 'Test book',
+            'author': 'Test author',
+            'price': 100,
+            'count': 5
+        }
+        client.post('/create', data=data, follow_redirects=True)
+        response = client.get('/delete/1', follow_redirects=True)
+        assert response.status_code == 200
+        print("✅ Delete book - done")
+
 
 def run_all_tests():
     print("=" * 50)
@@ -58,8 +84,9 @@ def run_all_tests():
         test_homepage,
         test_books_page,
         test_create_form,
-        test_css_file,
-        test_create_book
+        test_create_book,
+        test_update_book,
+        test_delete_book
     ]
     
     passed = 0

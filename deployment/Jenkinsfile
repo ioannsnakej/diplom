@@ -40,6 +40,9 @@ pipeline {
         REPO_USER = 'ivan'
         GIT_URL = 'git@github.com:ioannsnakej/diplom.git'
         PRJ_DIR = '/var/www/bookstore-app'
+        DB_USER="bookstore-user"
+        DB_NAME="bookstore-db"
+        DB_HOST="db"
     }
 
     stages {
@@ -101,7 +104,7 @@ pipeline {
                 warnError('Test failed'){
                     sh """
                         set -e
-                        docker rf -f \$(docker ps -a -q) || true
+                        docker rm -f \$(docker ps -a -q) || true
                         docker network create tests
                         docker run -d --name db \
                             -e POSTGRES_USER=postgres \
@@ -110,7 +113,16 @@ pipeline {
                             --network=tests \
                             postgres:16
                         echo "Waiting for db.."
-                        sleep 10
+                        sleep 15
+                        docker exec db psql -U postgres -d mydb -c "
+                            CREATE TABLE IF NOT EXISTS books (
+                                id SERIAL PRIMARY KEY,
+                                title VARCHAR(200) NOT NULL,
+                                author VARCHAR(100) NOT NULL,
+                                price DECIMAL(10,2) NOT NULL,
+                                count INTEGER DEFAULT 0
+                            );
+                        "
                         docker run -d --name backend \
                             -e DB_USER=postgres \
                             -e DB_PASS=postgres \
@@ -118,9 +130,64 @@ pipeline {
                             -e DB_HOST=db \
                             --network=tests \
                             ${env.DOCKER_REPO}:${BUILD_NUMBER}
-                        docker exec backend pytest -v --disable-warnings --maxfail=1
+                        sleep 10
+                        docker exec backend python -m pytest tests_app.py -v --disable-warnings --maxfail=1
                     """
                 }
+            }
+        }
+
+        stage('Prepare envs'){
+            when {
+                expression { !params.ROLLBACK }
+            }
+            steps {
+                sshCommand remote: remote, command: """
+                    set -ex; set -o pipefail
+                    cd ${env.PRJ_DIR}
+                    if [ -f .env ] && grep 'DB_PASS' .env; then
+                        DB_PASS=$(grep 'DB_PASS' .env | cut -d= -f2 | tr -d '\"')
+                    else
+                        DB_PASS=$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c12)
+                    fi
+                    cat > .env << EOF
+                    APP_IMAGE=${env.DOCKER_REPO}:${BUILD_NUMBER}
+                    DB_USER=${DB_USER}
+                    DB_NAME=${DB_NAME}
+                    DB_HOST=${DB_HOST}
+                    DB_PASS=${DB_PASS}
+                    EOF
+                    echo "✅ .env is ready"
+                """
+            }
+        }
+
+        stage('Deploy'){
+            when {
+                expression { !params.ROLLBACK }
+            }
+            steps {
+                sshCommand remote: remote, command: """
+                    set -ex; set -o pipefail
+                    cd ${env.PRJ_DIR}
+                    docker compose up -d
+                """
+            }
+        }
+
+        stage('Rollback'){
+            when {
+                expression { params.ROLLBACK == true }
+            }
+            steps {
+                sshCommand remote: remote, command: """
+                    set -ex; set -o pipefail
+                    cd ${env.PRJ_DIR}
+                    test -f .env || touch .env
+                    sed -i '/APP_IMAGE=/d' .env
+                    echo "APP_IMAGE="${env.DOCKER_REPO}:${TAG}" >> .env
+                    docker compose up -d backend --force-recreate
+                """
             }
         }
     }
