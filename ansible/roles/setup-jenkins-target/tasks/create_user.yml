@@ -1,0 +1,8 @@
+---
+- name: Create jenkins user
+  user:
+    name: jenkins
+    shell: /bin/bash
+    create_home: yes
+    groups: docker
+    append: yes

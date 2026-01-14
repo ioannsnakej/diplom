@@ -1,0 +1,6 @@
+---
+- name: Add pub-key jenkins
+  authorized_key:
+    user: jenkins
+    state: present
+    key: "{{ lookup('file', '{{ role_path }}/files/jenkins_key.pub') }}"

@@ -1,0 +1,4 @@
+#SPDX-License-Identifier: MIT-0
+---
+# vars file for setup-jenkins-agent
+java_package: openjdk-21-jre

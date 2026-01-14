@@ -1,0 +1,5 @@
+---
+- hosts: app-vm
+  become: true
+  roles:
+    - ../roles/setup-jenkins-target

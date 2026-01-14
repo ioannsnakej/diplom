@@ -1,0 +1,12 @@
+#SPDX-License-Identifier: MIT-0
+---
+# handlers file for setup-jenkins-agent
+- name: Restart docker
+  systemd:
+    name: docker
+    state: restarted
+
+- name: Enable docker
+  systemd:
+    name: docker
+    enabled: yes
