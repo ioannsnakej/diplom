@@ -39,7 +39,7 @@ pipeline {
         DOCKER_TOKEN = credentials('docker_token')
         REPO_USER = 'ivan'
         GIT_URL = 'git@github.com:ioannsnakej/diplom.git'
-        PRJ_DIR = '/var/www/bookstore-app'
+        PRJ_DIR = '/home/jenkins/bookstore-app'
         DB_USER="bookstore-user"
         DB_NAME="bookstore-db"
         DB_HOST="db"
@@ -64,8 +64,6 @@ pipeline {
             steps {
                 sshCommand remote: remote, command: """
                     set -ex; set -o pipefail
-                    sudo mkdir -p /var/www
-                    sudo chown -R jenkins:jenkins /var/www
                     test -d ${env.PRJ_DIR} || git clone ${env.GIT_URL} ${env.PRJ_DIR}
                     cd ${env.PRJ_DIR}
                     git checkout ${params.BRANCH}
