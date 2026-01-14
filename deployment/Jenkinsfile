@@ -8,14 +8,14 @@ pipeline {
         gitParameter(
             type: 'PT_BRANCH', 
             name: 'BRANCH', 
-            branchFilter: 'origin/.*', 
+            branchFilter: 'origin/(.*)', 
             sortMode: 'DESCENDING_SMART',
             defaultValue: 'main',
             quickFilterEnabled: true
         )
         string(
             name: 'HOST',
-            defaultValue: '192.168.56.9',
+            defaultValue: '127.0.0.1',
             description: 'Host for deploy'
         )
         booleanParam(
