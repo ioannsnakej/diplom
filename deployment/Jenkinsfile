@@ -15,7 +15,7 @@ pipeline {
         )
         string(
             name: 'HOST',
-            defaultValue: '192.168.56.9',
+            defaultValue: '127.0.0.1',
             description: 'Host for deploy'
         )
         booleanParam(
