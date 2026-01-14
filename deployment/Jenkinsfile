@@ -62,13 +62,15 @@ pipeline {
 
         stage('Checkout repo'){
             steps {
-                sshCommand remote: remote, command: """
-                    set -ex; set -o pipefail
-                    test -d ${env.PRJ_DIR} || git clone ${env.GIT_URL} ${env.PRJ_DIR}
-                    cd ${env.PRJ_DIR}
-                    git checkout ${params.BRANCH}
-                    git pull
-                """
+                script {
+                    ssh """
+                        set -ex; set -o pipefail
+                        test -d ${env.PRJ_DIR} || git clone ${env.GIT_URL} ${env.PRJ_DIR}
+                        cd ${env.PRJ_DIR}
+                        git checkout ${params.BRANCH}
+                        git pull
+                    """
+                }
             }
         }
 
