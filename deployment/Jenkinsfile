@@ -164,8 +164,12 @@ pipeline {
                     sshCommand remote: remote, command: """
                         set -ex; set -o pipefail
                         cd ${env.PRJ_DIR}
+                        if [ -f .env ] && grep 'DB_PASS' .env; then
+                            DB_PASS=\$(grep 'DB_PASS' .env | cut -d= -f2 | tr -d '\"')
+                        else
+                            DB_PASS=\$(openssl rand -base64 9 | tr -dc 'A-Za-z0-9' | head -c12)
+                        fi
                         > .env
-                        DB_PASS=\$(openssl rand -base64 9 | tr -dc 'A-Za-z0-9' | head -c12)
                         {
                             echo "APP_IMAGE=${env.DOCKER_REPO}:${BUILD_NUMBER}"
                             echo "DB_USER=${env.DB_USER}"
