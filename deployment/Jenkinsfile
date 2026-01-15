@@ -160,6 +160,9 @@ pipeline {
 
                         scp app/init_db.sql \
                         ${remote.user}@${remote.host}:${env.PRJ_DIR}/app/
+
+                        scp app/db.py \
+                        ${remote.user}@${remote.host}:${env.PRJ_DIR}/app/
                     """
                     sshCommand remote: remote, command: """
                         set -ex; set -o pipefail
