@@ -184,8 +184,8 @@ pipeline {
                     sshCommand remote: remote, command: """
                         set -ex
                         cd ${env.PRJ_DIR}
-                        docker compose pull
                         docker compose down -v --remove-orphans || true
+                        docker compose pull
                         docker compose up -d
                         docker compose ps
                     """
