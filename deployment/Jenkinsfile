@@ -51,7 +51,9 @@ pipeline {
             steps {
                 script {
                     sh """
-                        set -ex; set -o pipefail
+                        #!/bin/bash
+                        set -ex
+                        set -o pipefail
                         test -d ${env.PRJ_DIR} || git clone ${env.GIT_URL} ${env.PRJ_DIR}
                         cd ${env.PRJ_DIR}
                         git checkout ${params.BRANCH}
@@ -79,6 +81,7 @@ pipeline {
             steps {
                 warnError('Test failed'){
                     sh """
+                        #!/bin/bash
                         set -e
                         docker rm -f \$(docker ps -a -q) || true
                         docker network create tests
