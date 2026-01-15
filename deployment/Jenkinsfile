@@ -167,7 +167,7 @@ pipeline {
                         if [ -f .env ] && grep 'DB_PASS' .env; then
                             DB_PASS=\$(grep 'DB_PASS' .env | cut -d= -f2 | tr -d '\"')
                         else
-                            DB_PASS=\$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c12)
+                            DB_PASS=\$(openssl rand -base64 9 | tr -dc 'A-Za-z0-9' | head -c12)
                         fi
                         cat > .env << EOF
                         APP_IMAGE=${env.DOCKER_REPO}:${BUILD_NUMBER}
