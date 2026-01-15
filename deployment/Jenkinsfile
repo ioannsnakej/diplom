@@ -186,6 +186,7 @@ pipeline {
                         docker compose up -d
                         docker compose ps
                     """
+                }
             }
         }
 
@@ -194,23 +195,23 @@ pipeline {
                 expression { params.ROLLBACK == true }
             }
             steps {
-                steps {
-                    withCredentials([sshUserPrivateKey(credentialsId: 'jenkins-key', keyFileVariable: 'private_key', usernameVariable: 'username')]) {
-                        script {
-                            remote.name = "${params.HOST}"
-                            remote.host = "${params.HOST}"
-                            remote.user = "${username}"
-                            remote.identity = readFile "${private_key}"
-                            remote.allowAnyHosts = true
-                        }
-                        sshCommand remote: remote, command: """
-                            set -ex; set -o pipefail
-                            cd ${env.PRJ_DIR}
-                            test -f .env || touch .env
-                            sed -i '/APP_IMAGE=/d' .env
-                            echo "APP_IMAGE="${env.DOCKER_REPO}:${env.TAG}" >> .env
-                            docker compose up -d backend --force-recreate
-                        """
+                withCredentials([sshUserPrivateKey(credentialsId: 'jenkins-key', keyFileVariable: 'private_key', usernameVariable: 'username')]) {
+                    script {
+                        remote.name = "${params.HOST}"
+                        remote.host = "${params.HOST}"
+                        remote.user = "${username}"
+                        remote.identity = readFile "${private_key}"
+                        remote.allowAnyHosts = true
+                    }
+                    sshCommand remote: remote, command: """
+                        set -ex; set -o pipefail
+                        cd ${env.PRJ_DIR}
+                        test -f .env || touch .env
+                        sed -i '/APP_IMAGE=/d' .env
+                        echo "APP_IMAGE="${env.DOCKER_REPO}:${env.TAG}" >> .env
+                        docker compose up -d backend --force-recreate
+                    """
+                }
             }
         }
     }
