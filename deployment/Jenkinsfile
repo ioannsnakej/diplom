@@ -160,7 +160,7 @@ pipeline {
                         scp app/init_db.sql \
                         ${remote.user}@${remote.host}:${env.PRJ_DIR}/app/
 
-                        scp -r app/static/* \
+                        scp -r app/static \
                         ${remote.user}@${remote.host}:${env.PRJ_DIR}/app/
                     """
                     sshCommand remote: remote, command: """
