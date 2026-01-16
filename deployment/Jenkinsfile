@@ -188,7 +188,7 @@ pipeline {
                         docker compose pull
                         docker compose up -d
                         docker compose ps
-                        docker image prune -a
+                        docker image prune -a -f
                     """
                 }
             }
