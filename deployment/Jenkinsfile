@@ -221,7 +221,7 @@ pipeline {
     post {
         always {
             sh """
-                docker system prune -f || true
+                docker system prune -a -f || true
             """
         }
 
