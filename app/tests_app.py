@@ -1,9 +1,32 @@
 import sys
 import os
+import unittest.mock as mock
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+mock_db_module = mock.Mock()
+mock_connection = mock.Mock()
+mock_cursor = mock.Mock()
+
+mock_db_module.get_connection.return_value = mock_connection
+mock_connection.cursor.return_value = mock_cursor
+mock_cursor.fetchall.return_value = []
+mock_cursor.fetchone.return_value = None
+
+sys.modules['db'] = mock_db_module
+
 from app import app
+
+# Настройка для всех тестов
+def setup_module(module):
+    """Настройка перед всеми тестами"""
+    # Мокаем везде где используется get_connection
+    module.get_connection_patch = mock.patch('app.get_connection', return_value=mock_connection)
+    module.get_connection_patch.start()
+
+def teardown_module(module):
+    """Очистка после всех тестов"""
+    module.get_connection_patch.stop()
 
 #test: open main-page
 def test_homepage():
