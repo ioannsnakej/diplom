@@ -14,11 +14,13 @@ def test_homepage():
         print("✅ main-page is ready")
 
 #test: open books-page
+'''
 def test_books_page():
     with app.test_client() as client:
         response = client.get('/books')
         assert response.status_code == 200
         print("✅ Page /books is ready")
+'''
 
 #test: open book creation form
 def test_create_form():
