@@ -4,6 +4,7 @@ stages:
   - test
   - build
   - deploy
+  - notify
 
 variables:
   REGISTRY: https://index.docker.io/v1/
