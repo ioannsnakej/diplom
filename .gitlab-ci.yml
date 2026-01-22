@@ -48,7 +48,7 @@ test:job:
   before_script:
     - pip install pytest
   script:
-    - pytest ./app/tests_app.py > test_result
+    - pytest ./app/tests_app_for_gitlabci.py > test_result
   artifacts:
     paths:
       - test_result
