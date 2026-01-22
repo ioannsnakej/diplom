@@ -1,15 +1,22 @@
 stages:
   - app-lint
   - docker-lint
-  - build
   - test
+  - build
   - deploy
 
 variables:
   REGISTRY: https://index.docker.io/v1/
-  REPO: ivankhodyrev/bookstore-app
-  REPO_USER: ivankhodyrev
+  DOCKER_REPO: ivankhodyrev/bookstore-app
+  DOCKER_USER: ivankhodyrev
   TAG: ${CI_COMMIT_SHORT_SHA}
+  SSH_OPT: -o StrictHostKeyChecking=no
+  SSH_USER: gitlab-runner
+  HOST: 192.168.56.6
+  PRJ_DIR: /var/www/bookstore-app
+  API_URL: https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage
+  TELEGRAM_CHAT_ID: 940670214
+  TIMEOUT: 5
 
 linter-app:job:
   stage: app-lint
@@ -17,7 +24,7 @@ linter-app:job:
   before_script:
     - pip install pylint
   script:
-    - pylint ./app
+    - pylint ./app/*.py
   allow_failure: true
   tags:
     - runner
@@ -28,17 +35,6 @@ linter-docker:job:
   script:
     - hadolint Dockerfile
   allow_failure: true
-  tags:
-    - runner
-
-build:job:
-  stage: build
-  image:
-    name: gcr.io/kaniko-project/executor:v1.9.0-debug
-    entrypoint: [""]
-  script:
-    - echo "{\"auths\":{\"$REGISTRY\":{\"username\":\"$REPO_USER\",\"password\":\"$TOKEN\"}}}" > /kaniko/.docker/config.json
-    - /kaniko/executor --context=$CI_PROJECT_DIR --dockerfile=$CI_PROJECT_DIR/Dockerfile --destination=${REPO}:${TAG}
   tags:
     - runner
 
@@ -55,9 +51,45 @@ test:job:
   tags:
     - runner
 
-#notify:job:
-#  stage: notify
-#  image: curlimages/curlimages
-#  before_script:
-#    - export URL=${API_URL}
-#    - export TEXT="Deploy Project: "
+build:job:
+  stage: build
+  image:
+    name: gcr.io/kaniko-project/executor:v1.9.0-debug
+    entrypoint: [""]
+  script:
+    - echo "{\"auths\":{\"$REGISTRY\":{\"username\":\"$DOCKER_USER\",\"password\":\"$TOKEN\"}}}" > /kaniko/.docker/config.json
+    - /kaniko/executor --context=$CI_PROJECT_DIR --dockerfile=$CI_PROJECT_DIR/Dockerfile --destination=${DOCKER_REPO}:${TAG}
+  tags:
+    - runner
+
+deploy-compose:
+  stage: deploy
+  image: docker:28.5.1
+  variables:
+    APP_IMAGE: ${DOCKER_REPO}:${TAG}
+  before_script:
+    - apk add gettext openssh
+    - eval $(ssh-agent -s)
+    - chmod 600 $SSH_KEY
+    - ssh-add $SSH_KEY
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+  script:
+    - envsubst < compose.tmpl > compose.yml
+    - |
+      ssh ${SSH_OPT} ${SSH_USER}@${HOST} "
+        [ ! -d ${PRJ_DIR} ] && sudo mkdir -p ${PRJ_DIR} && sudo chown ${SSH_USER}:${SSH_USER} ${PRJ_DIR}
+      "
+    - scp SSH_OPT compose.yml ${SSH_USER}@${HOST}:${PRJ_DIR}
+    - |
+        ssh ${SSH_OPT} ${SSH_USER}@${HOST} "docker compose -f ${PRJ_DIR}/compose.yml up -d"
+  when: manual
+
+notify-tg:
+  stage: notify
+  image: curlimages/curl
+  before_script: |
+      export URL=${API_URL}
+      export TEXT="Deploy Project: $CI_PROJECT_NAME%0ABranch: $CI_COMMIT_REF_NAME%0APipeline: $CI_PIPELINE_URL%0AUser: $GITLAB_USER_NAME"
+  script:
+    - curl -s --max-time $TIMEOUT -d "chat_id=$TELEGRAM_CHAT_ID&disable_web_page_preview=1&text=$TEXT" $URL > /dev/null
