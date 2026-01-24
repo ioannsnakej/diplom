@@ -1,8 +1,10 @@
+image: docker:28.4.0
+
 .ssh_setup:
   before_script:
     - apk update && apk add openssh-client rsync bash
     - eval "$(ssh-agent -s)"
-    - mkdir ~/.ssh
+    - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
     - echo "$SSH_KEY" | ssh-add -
     - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
@@ -90,7 +92,6 @@ test:job:
 
 prepare:job:
   stage: prepare
-  image: alpine:latest
   extends: .ssh_setup
   script:
     - |
