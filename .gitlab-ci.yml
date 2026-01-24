@@ -37,7 +37,7 @@ linter-app:job:
   stage: app-lint
   image: python:3.12-slim
   before_script:
-    - pip install pylint
+    - pip install pylint flask psycopg2-binary python-dotenv
   script:
     - pylint ./app/*.py
   allow_failure: true
