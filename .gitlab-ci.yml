@@ -81,7 +81,7 @@ test:job:
   before_script:
     - pip install -r ./app/requirements.txt
   script:
-    - pytest -v --disable-warnings --maxfail=1 ./app/test_app.py | tee items-tests_${CI_PIPELINE_ID}.log
+    - pytest -v --disable-warnings --maxfail=1 ./app/tests_app.py | tee items-tests_${CI_PIPELINE_ID}.log
   artifacts:
     paths:
       - items-tests_${CI_PIPELINE_ID}.log
