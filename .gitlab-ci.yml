@@ -27,6 +27,7 @@ variables:
   SSH_USER: gitlab-runner
   HOST: 192.168.56.6
   PRJ_DIR: /var/www/bookstore-app
+  GIT_URL: git@gitlab.com:khodyrev-ivan/diplom.git
   API_URL: https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage
   TELEGRAM_CHAT_ID: 940670214
   TIMEOUT: 5
