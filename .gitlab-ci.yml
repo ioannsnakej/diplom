@@ -21,6 +21,7 @@ stages:
   - test
   - prepare
   - deploy
+  - rollback
   - notify
 
 variables:
