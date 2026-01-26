@@ -1,5 +1,11 @@
 image: docker:28.4.0
 
+workflow:
+  rules:
+    - if: '$DEPLOY_MODE == "deploy"'
+    - if: '$DEPLOY_MODE == "rollback"'
+    - when: never
+
 .ssh_setup:
   before_script:
     - apk update && apk add openssh-client rsync bash
@@ -22,6 +28,8 @@ variables:
   DOCKER_REPO: ivankhodyrev/bookstore-app
   DOCKER_USER: ivankhodyrev
   TAG: ""
+  RUN_TESTS: "true"
+  DEPLOY_MODE: "deploy"
   SSH_OPT: -o StrictHostKeyChecking=no
   SSH_USER: gitlab-runner
   HOST: 192.168.56.6
@@ -39,7 +47,7 @@ linter-app:job:
   stage: lint
   image: python:3.12-slim
   before_script:
-    - pip install pylint flask psycopg2-binary python-dotenv
+    - pip install pylint
   script:
     - pylint ./app/*.py
   allow_failure: true
@@ -63,6 +71,8 @@ build:job:
   script:
     - echo "{\"auths\":{\"$REGISTRY\":{\"username\":\"$DOCKER_USER\",\"password\":\"$DOCKER_TOKEN\"}}}" > /kaniko/.docker/config.json
     - /kaniko/executor --context=$CI_PROJECT_DIR --dockerfile=$CI_PROJECT_DIR/Dockerfile --destination=${IMAGE_TAG}
+  after_script:
+    - curl -X POST -d chat_id=$TELEGRAM_CHAT_ID -d text="✅Build ${IMAGE_TAG} success" ${API_URL}
   tags:
     - runner
 
@@ -84,6 +94,14 @@ test:job:
     - pip install -r ./app/requirements.txt
   script:
     - pytest -v --disable-warnings --maxfail=1 ./app/tests_app.py | tee bookstore-tests_${CI_PIPELINE_ID}.log
+  after_script:
+    - |
+      RESULT=${cat bookstore-tests_${CI_PIPELINE_ID}.log}
+      curl -X POST \
+      -d chat_id=$TELEGRAM_CHAT_ID \
+      -d text="✅Test ${IMAGE_TAG} success. Result: ${RESULT}" ${API_URL}
+  rules:
+    - if: '$DEPLOY_MODE == "deploy" && $RUN_TESTS == "true"'
   artifacts:
     paths:
       - bookstore-tests_${CI_PIPELINE_ID}.log
@@ -116,6 +134,8 @@ prepare:job:
           echo "DB_PASS=${DB_PASS}"
         } > .env
       "
+  rules:
+    - if: '$DEPLOY_MODE == "deploy"'
   tags:
     - runner
 
@@ -128,16 +148,45 @@ deploy-compose:
     - |
       ssh ${SSH_USER}@${HOST} "cd ${PRJ_DIR}; 
       sudo docker compose up -d"
+  after_script:
+    - curl -X POST -d chat_id=$TELEGRAM_CHAT_ID -d text="✅Deploy ${IMAGE_TAG} success" ${API_URL}
+  rules:
+     - if: '$DEPLOY_MODE == "deploy"'
+     - if: '$CI_COMMIT_BRANCH == "main"'
+       when: on_success
   tags:
     - runner
 
-notify-tg:
+rollback:
+  stage: rollback
+  extends: .ssh_setup
+  script:
+    - |
+       ssh ${SSH_USER}@${HOST} "cd ${PRJ_DIR}; 
+       test -f .env || touch .env
+       sed -i '/^APP_IMAGE=/d' .env
+       echo -e \"\nAPP_IMAGE=${REPO}:${TAG}\" >> .env"
+       docker compose up -d backend --force-recreate
+  after_script:
+    - curl -X POST -d chat_id=$TELEGRAM_CHAT_ID -d text="✅Rollback ${IMAGE_TAG} success" ${API_URL}
+  rules:
+    - if: '$DEPLOY_MODE == "rollback"'
+    - when: manual
+  tags:
+    - runner
+
+telegram_notify_failure:
   stage: notify
   image: curlimages/curl
   before_script: |
       export URL=${API_URL}
       export TEXT="Deploy Project: $CI_PROJECT_NAME%0ABranch: $CI_COMMIT_REF_NAME%0APipeline: $CI_PIPELINE_URL%0AUser: $GITLAB_USER_NAME"
   script:
-    - curl -s --max-time $TIMEOUT -d "chat_id=$TELEGRAM_CHAT_ID&disable_web_page_preview=1&text=$TEXT" $URL > /dev/null
+    - |
+      curl -s -X POST https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage \
+      -d chat_id=${TELEGRAM_CHAT_ID} \
+      -d text="❌ Build and push for *$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME* by $GITLAB_USER_NAME failed on branch *$CI_COMMIT_BRANCH* :( [Check logs]($CI_PIPELINE_URL)" \
+      -d parse_mode=Markdown
+  when: on_failure
   tags:
     - runner
