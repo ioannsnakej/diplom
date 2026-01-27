@@ -104,7 +104,6 @@ test:job:
     - pip install -r ./app/requirements.txt
   script:
     - pytest -v --disable-warnings --maxfail=1 ./app/tests_app.py | tee bookstore-tests_${CI_PIPELINE_ID}.log
-    - cat bookstore-tests_${CI_PIPELINE_ID}.log
   rules:
     - if: '$DEPLOY_MODE == "deploy" && $RUN_TESTS == "true"'
   artifacts:
@@ -168,10 +167,8 @@ rollback:
        ssh ${SSH_USER}@${HOST} "cd ${PRJ_DIR}; 
        test -f .env || touch .env
        sed -i '/^APP_IMAGE=/d' .env
-       echo -e \"\nAPP_IMAGE=${REPO}:${TAG}\" >> .env"
+       echo -e \"\nAPP_IMAGE=${DOCKER_REPO}:${TAG}\" >> .env"
        docker compose up -d backend --force-recreate
-  after_script:
-    - curl -X POST -d chat_id=$TELEGRAM_CHAT_ID -d text="✅Rollback ${IMAGE_TAG} success" ${API_URL}
   rules:
     - if: '$DEPLOY_MODE == "rollback"'
       when: manual
@@ -217,10 +214,11 @@ telegram_notify_failure:
       export MODE="Rollback"
       export EMOJI="⬅️"
     else
+      export MODE="Build"
       export EMOJI="❌"
     fi
     
-    export TEXT="${EMOJI} ${MODE} for ${CI_PROJECT_NAME} by ${GITLAB_USER_NAME} failed on branch *${CI_COMMIT_BRANCH}* :(%0AJob: ${CI_JOB_NAME}%0APipeline: ${CI_PIPELINE_URL}"
+    export TEXT="${EMOJI} ${MODE} for ${CI_PROJECT_NAME} by ${GITLAB_USER_NAME} failed on branch *${CI_COMMIT_BRANCH}*:%0AJob: ${CI_JOB_NAME}%0APipeline: ${CI_PIPELINE_URL}"
   script:
     - |
       curl -s -X POST ${URL} \
