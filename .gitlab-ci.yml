@@ -6,21 +6,6 @@ workflow:
     - if: '$DEPLOY_MODE == "rollback"'
     - when: never
 
-spec:
-  inputs:
-    DEPLOY_MODE:
-      description: "Choose DEPLOY_MODE: deploy or rollback"
-      type: string
-      required: true
-      options: ["deploy", "rollback"]
-    TAG:
-      type: string
-      default: ""
-    RUN_TESTS:
-      description: "Run tests?"
-      type: boolean
-      default: true
-
 .ssh_setup:
   before_script:
     - apk update && apk add openssh-client rsync bash
@@ -43,9 +28,14 @@ variables:
   REGISTRY: https://index.docker.io/v1/
   DOCKER_REPO: ivankhodyrev/bookstore-app
   DOCKER_USER: ivankhodyrev
-  DEPLOY_MODE: $[[ inputs.DEPLOY_MODE ]]
-  TAG: $[[ inputs.TAG ]]
-  RUN_TESTS: $[[ inputs.RUN_TESTS ]]
+  TAG: ""
+  RUN_TESTS: "true"
+  DEPLOY_MODE: 
+    value: "deploy"
+    options:
+      - "deploy"
+      - "rollback"
+    description: "Choose Deploy or Rollback"
   SSH_OPT: -o StrictHostKeyChecking=no
   SSH_USER: gitlab-runner
   HOST: 192.168.56.6
