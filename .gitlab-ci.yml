@@ -168,7 +168,8 @@ rollback:
     - curl -X POST -d chat_id=$TELEGRAM_CHAT_ID -d text="✅Rollback ${IMAGE_TAG} success" ${API_URL}
   rules:
     - if: '$DEPLOY_MODE == "rollback"'
-    - when: manual
+      when: manual
+    - when: never
   tags:
     - runner
 
