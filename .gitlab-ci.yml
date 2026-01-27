@@ -223,7 +223,6 @@ telegram_notify_failure:
       export MODE="Rollback"
       export EMOJI="⬅️"
     else
-      export MODE="Deploy"
       export EMOJI="❌"
     fi
     
@@ -233,7 +232,6 @@ telegram_notify_failure:
       curl -s -X POST ${URL} \
         -d chat_id=${TELEGRAM_CHAT_ID} \
         -d text="${TEXT}" \
-        -d parse_mode=Markdown
   when: on_failure
   rules:
     - if: '$DEPLOY_MODE == "deploy"'
