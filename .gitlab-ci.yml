@@ -131,19 +131,23 @@ prepare:job:
   extends: .ssh_setup
   script:
     - |
+      if [ -f .env ] && grep 'DB_PASS' .env; then
+        DB_PASS=$(grep 'DB_PASS' .env | cut -d= -f2 | tr -d '\"')
+      else
+        DB_PASS=$(openssl rand -base64 9 | tr -dc 'A-Za-z0-9' | head -c12)
+      fi
       ssh ${SSH_USER}@${HOST} "
         test -d /var/www || sudo mkdir -p /var/www;
         sudo chown -R gitlab-runner:gitlab-runner /var/www;
         test -d ${PRJ_DIR} || git clone ${GIT_URL} ${PRJ_DIR};
         cd ${PRJ_DIR};
-        if [ -f .env ] && grep 'DB_PASS' .env; then
-          DB_PASS=$(grep 'DB_PASS' .env | cut -d= -f2 | tr -d '\"')
-        else
-          DB_PASS=$(openssl rand -base64 9 | tr -dc 'A-Za-z0-9' | head -c12)
-        fi
         git checkout main;
         git pull;
         cd ${PRJ_DIR};
+        if [ -f .env ]; then
+          sed -i '/^APP_IMAGE=/d' .env ;
+          echo "APP_IMAGE=${IMAGE_TAG}" >> .env ;
+        else
         {
           echo "APP_IMAGE=${IMAGE_TAG}"
           echo "DB_USER=${DB_USER}"
@@ -151,6 +155,7 @@ prepare:job:
           echo "DB_HOST=${DB_HOST}"
           echo "DB_PASS=${DB_PASS}"
         } > .env
+        fi
       "
   rules:
     - if: '$DEPLOY_MODE == "deploy"'
