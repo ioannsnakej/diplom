@@ -101,7 +101,7 @@ build:job:
 test:job:
   stage: test
   needs: 
-    - job: ["build:job"]
+    - job: build:job
       optional: true 
   image: 
     name: ${IMAGE_TAG}
@@ -161,7 +161,7 @@ prepare:job:
 deploy-compose:
   stage: deploy
   needs: 
-    - job: ["prepare:job"]
+    - job: prepare:job
       optional: true
   extends: .ssh_setup
   script:
