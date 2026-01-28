@@ -131,16 +131,16 @@ prepare:job:
   extends: .ssh_setup
   script:
     - |
-      if [ -f .env ] && grep 'DB_PASS' .env; then
-        DB_PASS=$(grep 'DB_PASS' .env | cut -d= -f2 | tr -d '\"')
-      else
-        DB_PASS=$(openssl rand -base64 9 | tr -dc 'A-Za-z0-9' | head -c12)
-      fi
       ssh ${SSH_USER}@${HOST} "
         test -d /var/www || sudo mkdir -p /var/www;
         sudo chown -R gitlab-runner:gitlab-runner /var/www;
         test -d ${PRJ_DIR} || git clone ${GIT_URL} ${PRJ_DIR};
         cd ${PRJ_DIR};
+        if [ -f .env ] && grep 'DB_PASS' .env; then
+          DB_PASS=$(grep 'DB_PASS' .env | cut -d= -f2 | tr -d '\"')
+        else
+          DB_PASS=$(openssl rand -base64 9 | tr -dc 'A-Za-z0-9' | head -c12)
+        fi
         git checkout main;
         git pull;
         cd ${PRJ_DIR};
@@ -182,8 +182,8 @@ rollback:
        ssh ${SSH_USER}@${HOST} "cd ${PRJ_DIR}; 
        test -f .env || touch .env
        sed -i '/^APP_IMAGE=/d' .env
-       echo -e \"\nAPP_IMAGE=${DOCKER_REPO}:${TAG}\" >> .env"
-       docker compose up -d backend --force-recreate
+       echo -e \"\nAPP_IMAGE=${DOCKER_REPO}:${TAG}\" >> .env
+       docker compose up -d backend --force-recreate"
   rules:
     - if: '$DEPLOY_MODE == "rollback"'
       when: manual
@@ -227,7 +227,7 @@ telegram_notify_failure:
     export URL=${API_URL}
     if [ "$DEPLOY_MODE" == "rollback" ]; then
       export MODE="Rollback"
-      export EMOJI="⬅️"
+      export EMOJI="❌"
     else
       export MODE="Build"
       export EMOJI="❌"
