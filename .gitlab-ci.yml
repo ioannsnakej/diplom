@@ -141,7 +141,7 @@ prepare:job:
         touch .env;
         sed -i '/^APP_IMAGE=/d' .env ;
         echo "APP_IMAGE=${IMAGE_TAG}" >> .env ;
-        if ! grep -q '^DB_PASS=' .env; then
+        if ! grep -q '^DB_PASS=.' .env; then
           DB_PASS=\$(openssl rand -base64 9 | tr -dc 'A-Za-z0-9' | head -c12) ;
           echo "DB_PASS=${DB_PASS}" >> .env ;
         fi
@@ -155,7 +155,7 @@ prepare:job:
     - runner
 
 
-deploy-compose:
+deploy-compose:job:
   stage: deploy
   needs: 
     - job: prepare:job
@@ -171,16 +171,22 @@ deploy-compose:
   tags:
     - runner
 
-rollback:
+rollback:job:
   stage: rollback
   extends: .ssh_setup
   script:
     - |
-       ssh ${SSH_USER}@${HOST} "cd ${PRJ_DIR}; 
-       test -f .env || touch .env
-       sed -i '/^APP_IMAGE=/d' .env
-       echo -e \"\nAPP_IMAGE=${DOCKER_REPO}:${TAG}\" >> .env
-       docker compose up -d backend --force-recreate"
+      ssh ${SSH_USER}@${HOST} "
+        if [ -z "${TAG}" ]; then
+          echo "TAG is missing. Usage: TAG for rollback"
+          exit
+        fi
+        cd ${PRJ_DIR}; 
+        test -f .env || touch .env
+        sed -i '/^APP_IMAGE=/d' .env
+        echo -e \"\nAPP_IMAGE=${DOCKER_REPO}:${TAG}\" >> .env
+        docker compose up -d --force-recreate
+      "
   rules:
     - if: '$DEPLOY_MODE == "rollback"'
       when: manual
@@ -188,7 +194,7 @@ rollback:
   tags:
     - runner
 
-telegram_notify_success:
+telegram_notify_success:job:
   stage: notify
   image: curlimages/curl
   before_script: |
@@ -217,7 +223,7 @@ telegram_notify_success:
   tags:
     - runner
 
-telegram_notify_failure:
+telegram_notify_failure:job:
   stage: notify
   image: curlimages/curl
   before_script: |
