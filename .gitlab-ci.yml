@@ -143,7 +143,10 @@ prepare:job:
           sed -i '/^APP_IMAGE=/d' .env ;
           echo "APP_IMAGE=${IMAGE_TAG}" >> .env ;
         else
-          DB_PASS=\$(openssl rand -base64 9 | tr -dc 'A-Za-z0-9' | head -c12)
+          if ! grep -q '^DB_PASS=' .env; then
+            DB_PASS=\$(openssl rand -base64 9 | tr -dc 'A-Za-z0-9' | head -c12) ;
+            echo "DB_PASS=${DB_PASS}" >> .env ;
+          fi
           {
             echo "APP_IMAGE=${IMAGE_TAG}"
             echo "DB_USER=${DB_USER}"
