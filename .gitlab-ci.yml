@@ -138,23 +138,16 @@ prepare:job:
         cd ${PRJ_DIR};
         git checkout main;
         git pull;
-        cd ${PRJ_DIR};
-        if [ -f .env ]; then
-          sed -i '/^APP_IMAGE=/d' .env ;
-          echo "APP_IMAGE=${IMAGE_TAG}" >> .env ;
-        else
-          if ! grep -q '^DB_PASS=' .env; then
-            DB_PASS=\$(openssl rand -base64 9 | tr -dc 'A-Za-z0-9' | head -c12) ;
-            echo "DB_PASS=${DB_PASS}" >> .env ;
-          fi
-          {
-            echo "APP_IMAGE=${IMAGE_TAG}"
-            echo "DB_USER=${DB_USER}"
-            echo "DB_NAME=${DB_NAME}"
-            echo "DB_HOST=${DB_HOST}"
-            echo "DB_PASS=${DB_PASS}"
-          } > .env
+        touch .env;
+        sed -i '/^APP_IMAGE=/d' .env ;
+        echo "APP_IMAGE=${IMAGE_TAG}" >> .env ;
+        if ! grep -q '^DB_PASS=' .env; then
+          DB_PASS=\$(openssl rand -base64 9 | tr -dc 'A-Za-z0-9' | head -c12) ;
+          echo "DB_PASS=${DB_PASS}" >> .env ;
         fi
+        grep -q '^DB_USER=' .env || echo "DB_USER=${DB_USER}" >> .env ;
+        grep -q '^DB_NAME=' .env || echo "DB_NAME=${DB_NAME}" >> .env ;
+        grep -q '^DB_HOST=' .env || echo "DB_HOST=${DB_HOST}" >> .env ;
       "
   rules:
     - if: '$DEPLOY_MODE == "deploy"'
