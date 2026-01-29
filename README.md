@@ -62,7 +62,7 @@ curl http://localhost:8000/delete/23
 Для основной раскатки приложения на новой машине выбран инструмент GitlabCI:
 - ./deployment/.gitlab-ci.yml
 
-### .gitlab-ci,yml
+### .gitlab-ci.yml
 Собирает образ, тестирует его и деплоит. Так же релизована функция роллбэка.
 - `linter-app:job` - джоба для проверки кода приложения linter`ом
 - `linter-docker:job` - джоба для проверки Dockerfile linter`ом
