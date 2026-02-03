@@ -1,5 +1,6 @@
 resource "yandex_compute_instance" "bookstore-app" {
     name = "bookstore-app"
+    hostname = "bookstore-app"
     platfirm_id = "standard-v3"
 
     resources {
