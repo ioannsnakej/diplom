@@ -3,4 +3,3 @@
   become: true
   roles:
     - ../roles/install-docker
-#    - ../roles/setup-bookstore-app

@@ -1,6 +1,0 @@
----
-- hosts: jenkins-agent
-  become: true
-  roles:
-    - ../roles/install-docker
-    - ../roles/setup-jenkins-agent
