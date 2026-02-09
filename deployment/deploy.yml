@@ -54,7 +54,6 @@ variables:
   PRJ_DIR: /var/www/bookstore-app
   GIT_URL: https://gitlab.com/khodyrev-ivan/diplom.git
   API_URL: https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage
-  TELEGRAM_CHAT_ID: 940670214
   TIMEOUT: 5
   IMAGE_TAG: ${DOCKER_REPO}:${CI_PIPELINE_ID}
   DB_USER: bookstoreuser
@@ -141,11 +140,7 @@ prepare:job:
         touch .env;
         sed -i '/^APP_IMAGE=/d' .env ;
         echo "APP_IMAGE=${IMAGE_TAG}" >> .env ;
-        if ! grep -q '^DB_PASS=.' .env; then
-          DB_PASS=$(openssl rand -base64 9 | tr -dc 'A-Za-z0-9' | head -c12) 
-          sed -i '/^DB_PASS=/d' .env
-          echo "DB_PASS=${DB_PASS}" >> .env
-        fi
+        grep -q '^DB_PASS=' .env || echo "DB_PASS=${DB_PASS}" >> .env ;
         grep -q '^DB_USER=' .env || echo "DB_USER=${DB_USER}" >> .env ;
         grep -q '^DB_NAME=' .env || echo "DB_NAME=${DB_NAME}" >> .env ;
         grep -q '^DB_HOST=' .env || echo "DB_HOST=${DB_HOST}" >> .env ;
@@ -165,7 +160,7 @@ deploy-compose:job:
   script:
     - |
       ssh ${SSH_USER}@${HOST} "cd ${PRJ_DIR}; 
-      sudo docker compose down -v --remove-orphans || true
+      sudo docker compose pull;
       sudo docker compose up -d"
   rules:
      - if: '$DEPLOY_MODE == "deploy"'

@@ -3,13 +3,13 @@ users:
     - name: gitlab-runner
       groups: sudo
       shell: /bin/bash
-      suddo: 'ALL=(ALL) NOPASSWD:ALL'
+      sudo: 'ALL=(ALL) NOPASSWD:ALL'
       ssh_authorized_keys:
         - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOcmnxDHpiU2qDZU335W9Fwbk8HgQWTNYr/xZugjy6RZ gitlab-runner@gitlabci-worker
     - name: ivan
       groups: sudo
       shell: /bin/bash
-      suddo: 'ALL=(ALL) NOPASSWD:ALL'
+      sudo: 'ALL=(ALL) NOPASSWD:ALL'
       ssh_authorized_keys:
         - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJrHp3K/A427dv9hhcKs1L1aG7VGP9326C0F90hNR5Z9 ioannsnakej@gmail.com
         - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDvsQZKumSke2Sz/vC8/wE1URjqwQ+HIIcw5zua5hh5Q ivan@gitlabci-worker

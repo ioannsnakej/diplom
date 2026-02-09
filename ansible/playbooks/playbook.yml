@@ -1,5 +1,5 @@
 ---
-- hosts: app-vm
+- hosts: all
   become: true
   roles:
     - ../roles/install-docker
