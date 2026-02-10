@@ -58,7 +58,7 @@ variables:
   IMAGE_TAG: ${DOCKER_REPO}:${CI_PIPELINE_ID}
   DB_USER: bookstoreuser
   DB_NAME: bookstore
-  DB_HOST: db
+  DB_HOST: bookstore-db
 
 linter-app:job:
   stage: lint
@@ -108,7 +108,7 @@ test:job:
   variables:
     POSTGRES_DB: mydb
     POSTGRES_USER: postgres
-    POSTGRES_PASSWORD: postgres
+    POSTGRES_PASSWORD: ${DB_PASS_TST}
     POSTGRES_AUTH_METHOD: trust
   services:
     - name: postgres:16

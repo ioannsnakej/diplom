@@ -9,7 +9,11 @@ resource "yandex_compute_instance" "bookstore-app" {
   }
 
   boot_disk {
-    disk_id = yandex_compute_disk.bookstore-app-boot-disk-1.id
+    initialize_params {
+      type     = "network-hdd"
+      image_id = var.default_image
+      size     = var.disk_size
+    }
   }
 
   network_interface {
@@ -22,10 +26,10 @@ resource "yandex_compute_instance" "bookstore-app" {
   }
 
   connection {
-      host        = self.network_interface.0.nat_ip_address
-      user        = "ivan"
-      private_key = file("~/.ssh/id_ed25519")
-      timeout     = "5m"
+    host        = self.network_interface.0.nat_ip_address
+    user        = "ivan"
+    private_key = file("~/.ssh/id_ed25519")
+    timeout     = "5m"
   }
 
   provisioner "remote-exec" {
