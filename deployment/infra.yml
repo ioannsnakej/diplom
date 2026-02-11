@@ -1,0 +1,64 @@
+image:
+  name: hashicorp/terraform
+  entrypoint: [""]
+
+stages:
+  - linting
+  - validate
+  - plan
+  - apply
+
+variables:
+  DIR: "terraform"
+  PLAN_FILE: "deploy.tfplan-${CI_COMMIT_SHORT_SHA}"
+  API_URL: "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage"
+
+linter:job:
+  stage: linting
+  image:
+    name: ghcr.io/terraform-linters/tflint
+  script:
+    - cd ${DIR}
+    - tflint --init
+    - tflint
+    - terraform fmt -recursive
+  allow_failure: true
+  tags:
+    - runner
+
+validate:job:
+  stage: validate
+  script:
+    - cd ${DIR}
+    - terraform init
+    - terraform validate
+  tags:
+    - runner
+
+plan:job:
+  stage: plan
+  script:
+    - cd ${DIR}
+    - terraform init
+    - terraform plan -out=${PLAN_FILE}
+  artifacts:
+    paths:
+      - ${DIR}/${PLAN_FILE}
+    expire_in: 1 hour
+  tags:
+    - runner
+
+apply:job:
+  stage: apply
+  before_script:
+    - curl -X POST -d chat_id=$TELEGRAM_CHAT_ID -d text="Apply job started for" ${API_URL}
+  script:
+    - cd ${DIR}
+    - terraform init
+    - terraform apply ${DIR}/${PLAN_FILE}
+  when: manual
+  tags:
+    - runner
+
+
+
