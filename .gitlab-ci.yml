@@ -60,7 +60,7 @@ validate:job:
     - *ssh_setup
     - *terraform-init
   script:
-    terraform -chdir=$DIR validate
+    - terraform -chdir=$DIR validate
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == "main"
