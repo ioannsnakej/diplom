@@ -1,9 +1,8 @@
 image:
-  name: hashicorp/terraform:1.6
+  name: cr.yandex/mirror/hashicorp/terraform:1.6
   entrypoint:
     - "/usr/bin/env"
     - "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-  pull_policy: if-not-present
 
 .ssh_setup: &ssh_setup
   - apk update && apk add openssh-client rsync bash --no-cache
