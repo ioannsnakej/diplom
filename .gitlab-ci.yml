@@ -58,10 +58,9 @@ linter:job:
     - "/usr/bin/env"
     - "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
   script:
-    - |
-      cd ${DIR}
-      - tflint --init
-      - tflint
+    - cd ${DIR}
+    - tflint --init
+    - tflint
   allow_failure: true
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
