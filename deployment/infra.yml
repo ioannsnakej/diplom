@@ -111,12 +111,22 @@ apply:job:
     - *yc-init
   script:
     - terraform -chdir=$DIR apply -input=false ${PLAN_FILE}
-    - terraform output -raw instance_ip > ${DIR}/instance_ip.txt
+    - PUB_IP=$(terraform output -raw instance_ip) 
+    - echo "PUB_IP=$PUB_IP" > build.env
   artifacts:
-    paths:
-      - ${DIR}/instance_ip.txt
+    reports:
+      dotenv: build.env
   when: manual
   rules:
     - if: '$CI_COMMIT_MESSAGE =~ /\[infra\]/'       
   tags:
-    - runner
+  
+trigger:deploy:
+  stage: run-deploy
+  trigger:
+    include:
+      - local: 'deployment/deploy.yml'
+  variables:
+    HOST: $PUB_IP
+  rules:
+    - when: on_success
