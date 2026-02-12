@@ -32,37 +32,24 @@ stages:
 workflow:
   rules:
     - if: '$CI_COMMIT_MESSAGE =~ /\[infra\]/'
-    - if: '$CI_COMMIT_MESSAGE =~ /\[destroy\]/'
-    - if: '$CI_COMMIT_BRANCH == "main"'
-    - if: '$DEPLOY_MODE == "deploy"'
-    - if: '$DEPLOY_MODE == "rollback"'
-    - when: never
-workflow:
-  rules:
-    - if: '$CI_COMMIT_MESSAGE =~ /\[infra\]/'
       variables:
         PIPELINE_TYPE: "infra"
-        DEPLOY_MODE: "deploy"
-     
+        DEPLOY_MODE: ""
     - if: '$CI_COMMIT_MESSAGE =~ /\[destroy\]/'
       variables:
         PIPELINE_TYPE: "destroy"
         DEPLOY_MODE: ""
-    
     - if: '$CI_COMMIT_BRANCH == "main" && $CI_COMMIT_MESSAGE !~ /\[infra\]/ && $CI_COMMIT_MESSAGE !~ /\[destroy\]/'
       variables:
         PIPELINE_TYPE: "deploy"
         DEPLOY_MODE: "deploy"
-        
     - if: '$DEPLOY_MODE == "deploy"'
       variables:
         PIPELINE_TYPE: "deploy"
-    
     - if: '$DEPLOY_MODE == "rollback"'
       variables:
         PIPELINE_TYPE: "rollback"
         DEPLOY_MODE: "rollback"
-    
     - when: never
 
 
@@ -70,6 +57,7 @@ variables:
   TAG: $[[ inputs.tag ]]
   RUN_TESTS: $[[ inputs.tests ]]
   DEPLOY_MODE: $[[ inputs.mode ]]
+  PIPELINE_TYPE: ""
 
 include:
   - local: 'deployment/infra.yml'

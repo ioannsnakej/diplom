@@ -111,7 +111,7 @@ apply:job:
     - *yc-init
   script:
     - terraform -chdir=$DIR apply -input=false ${PLAN_FILE}
-    - terraform output -raw instance_ip > ../instance_ip.txt
+    - terraform output -raw instance_ip > ${DIR}/instance_ip.txt
   artifacts:
     paths:
       - ${DIR}/instance_ip.txt
