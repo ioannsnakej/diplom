@@ -33,8 +33,7 @@ image:
   - curl -sSL https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash -s -- -i ./ -n 
   - cp ./bin/yc /usr/bin
   - yc config profile create sa-tf
-  - echo "$SA_KEY" > sa-key.json
-  - cat sa-key.json | head -20  
+  - cat "$SA_KEY" > sa-key.json 
   - yc config set service-account-key sa-key.json
   - export YC_TOKEN=$(yc iam create-token)
 
