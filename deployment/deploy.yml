@@ -1,5 +1,3 @@
-image: docker:28.4.0
-
 .ssh_setup:
   before_script:
     - apk update && apk add openssh-client rsync bash --no-cache
@@ -63,6 +61,7 @@ build:job:
 
 test:job:
   stage: test
+  image: docker:28.4.0
   needs: 
     - job: build:job
       optional: true 
@@ -91,6 +90,7 @@ test:job:
 
 prepare:job:
   stage: prepare
+  image: docker:28.4.0
   extends: .ssh_setup
   before_script:
     - export HOST=$(cat terraform/instance_ip.txt)
@@ -118,6 +118,7 @@ prepare:job:
 
 deploy-compose:job:
   stage: deploy
+  image: docker:28.4.0
   needs: 
     - job: prepare:job
       optional: true
@@ -136,6 +137,7 @@ deploy-compose:job:
 
 rollback:job:
   stage: rollback
+  image: docker:28.4.0
   extends: .ssh_setup
   before_script:
     - export HOST=$(cat terraform/instance_ip.txt)
