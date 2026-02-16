@@ -160,7 +160,6 @@ destroy:job:
 
 trigger-deploy:job:
   stage: run-deploy
-  image: alpine
   trigger:
     include:
       - local: 'deployment/deploy.yml'
