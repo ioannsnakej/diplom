@@ -3,7 +3,7 @@ spec:
     mode:
       description: "Choose MODE: apply or destroy/deploy or rollback"
       type: string
-      default: ""
+      default: "deploy"
       options: ["deploy", "rollback", "apply", "destroy"]
     tag:
       description: "Give me tag for rollback"
