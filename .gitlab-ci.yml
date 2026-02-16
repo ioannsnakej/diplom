@@ -10,6 +10,7 @@ spec:
       type: string
       default: ""
 ---
+
 stages:
   - lint-tf
   - validate
@@ -27,7 +28,7 @@ stages:
 
 variables:
   TAG: $[[ inputs.tag ]]
-  DEPLOY_MODE: $[[ inputs.mode ]]
+  MODE: $[[ inputs.mode ]]
 
 include:
   - local: 'deployment/infra.yml'
