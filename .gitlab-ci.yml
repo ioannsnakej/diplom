@@ -10,12 +10,7 @@ spec:
       type: string
       default: ""
 ---
-image:
-  name: hashicorp/terraform:1.6
-  entrypoint:
-    - "/usr/bin/env"
-    - "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-    
+
 stages:
   - lint-tf
   - validate
