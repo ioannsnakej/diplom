@@ -1,15 +1,5 @@
 image: docker:28.4.0
 
-.ssh_setup: &ssh_setup
-  - apk update && apk add openssh-client rsync bash --no-cache
-  - eval "$(ssh-agent -s)"
-  - mkdir -p ~/.ssh
-  - chmod 700 ~/.ssh
-  - cat $SSH_KEY > ~/.ssh/id_ed25519
-  - chmod 600 ~/.ssh/id_ed25519
-  - ssh-add ~/.ssh/id_ed25519 
-  - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
-
 stages:
   - lint-app
   - build
