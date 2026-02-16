@@ -4,59 +4,26 @@ spec:
       description: "Choose DEPLOY_MODE: deploy or rollback"
       type: string
       default: "deploy"
-      options: ["deploy", "rollback"]
+      options: ["deploy", "rollback", "apply", "destroy"]
     tag:
       description: "Give me tag for rollback"
       type: string
       default: ""
-    tests:
-      description: "Run tests?"
-      type: boolean
-      default: true
 ---
 
-stages:
-  - lint-tf
-  - validate
-  - plan
-  - apply
-  - run-deploy
-  - lint-app
-  - build
-  - test
-  - prepare
-  - deploy
-  - rollback
-  - notify
-
-workflow:
-  rules:
-    - if: '$CI_COMMIT_MESSAGE =~ /\[infra\]/'
-      variables:
-        PIPELINE_TYPE: "infra"
-        DEPLOY_MODE: ""
-    - if: '$CI_COMMIT_BRANCH == "main" && $CI_COMMIT_MESSAGE !~ /\[infra\]/ && $CI_COMMIT_MESSAGE !~ /\[destroy\]/'
-      variables:
-        PIPELINE_TYPE: "deploy"
-        DEPLOY_MODE: "deploy"
-    - if: '$CI_PIPELINE_SOURCE == "web" && $DEPLOY_MODE == "deploy"'
-      variables:
-        PIPELINE_TYPE: "deploy"
-        DEPLOY_MODE: "deploy"
-    - if: '$DEPLOY_MODE == "deploy"'
-      variables:
-        PIPELINE_TYPE: "deploy"
-    - if: '$CI_PIPELINE_SOURCE == "web" && $DEPLOY_MODE == "rollback"'
-      variables:
-        PIPELINE_TYPE: "rollback"
-        DEPLOY_MODE: "rollback"
-    - when: never
+.ssh_setup: &ssh_setup
+  - apk update && apk add openssh-client rsync bash --no-cache
+  - eval "$(ssh-agent -s)"
+  - mkdir -p ~/.ssh
+  - chmod 700 ~/.ssh
+  - cat $SSH_KEY > ~/.ssh/id_ed25519
+  - chmod 600 ~/.ssh/id_ed25519
+  - ssh-add ~/.ssh/id_ed25519 
+  - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
 
 variables:
   TAG: $[[ inputs.tag ]]
-  RUN_TESTS: $[[ inputs.tests ]]
   DEPLOY_MODE: $[[ inputs.mode ]]
-  PIPELINE_TYPE: ""
 
 include:
   - local: 'deployment/infra.yml'

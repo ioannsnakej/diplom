@@ -25,3 +25,9 @@ variable "default_memory" {
 variable "default_zone" {
   default = "ru-central1-b"
 }
+
+variable "sa_key_file" {
+  description = "Path to service account key file"
+  type        = string
+  default     = null
+}

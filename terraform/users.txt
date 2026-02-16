@@ -6,6 +6,7 @@ users:
       sudo: 'ALL=(ALL) NOPASSWD:ALL'
       ssh_authorized_keys:
         - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOcmnxDHpiU2qDZU335W9Fwbk8HgQWTNYr/xZugjy6RZ gitlab-runner@gitlabci-worker
+        - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAII3LQp/inwbXikp84KzO4R8rYDrg1LU6jFy2Gjoj1jnB gitlab-runner@app-vm
     - name: ivan
       groups: sudo
       shell: /bin/bash
