@@ -30,7 +30,7 @@ linter-app:job:
   script:
     - pylint ./app/*.py
   rules:
-    - if: '$MODE == "deploy"'
+    - if: '$DEPLOY_MODE == "deploy"'
   allow_failure: true
   tags:
     - runner
@@ -41,7 +41,7 @@ linter-docker:job:
   script:
     - hadolint Dockerfile
   rules:
-    - if: '$MODE == "deploy"'
+    - if: '$DEPLOY_MODE == "deploy"'
   allow_failure: true
   tags:
     - runner
@@ -55,7 +55,7 @@ build:job:
     - echo "{\"auths\":{\"$REGISTRY\":{\"username\":\"$DOCKER_USER\",\"password\":\"$DOCKER_TOKEN\"}}}" > /kaniko/.docker/config.json
     - /kaniko/executor --context=$CI_PROJECT_DIR --dockerfile=$CI_PROJECT_DIR/Dockerfile --destination=${IMAGE_TAG}
   rules:
-    - if: '$MODE == "deploy"'
+    - if: '$DEPLOY_MODE == "deploy"'
   tags:
     - runner
 
@@ -80,7 +80,7 @@ test:job:
   script:
     - pytest -v --disable-warnings --maxfail=1 ./app/tests_app.py | tee bookstore-tests_${CI_PIPELINE_ID}.log
   rules:
-    - if: '$MODE == "deploy"'
+    - if: '$DEPLOY_MODE == "deploy"'
   artifacts:
     paths:
       - bookstore-tests_${CI_PIPELINE_ID}.log
@@ -111,7 +111,7 @@ prepare:job:
         grep -q '^DB_HOST=' .env || echo "DB_HOST=${DB_HOST}" >> .env ;
       "
   rules:
-    - if: '$MODE == "deploy"'
+    - if: '$DEPLOY_MODE == "deploy"'
   tags:
     - runner
 
@@ -130,7 +130,7 @@ deploy-compose:job:
       sudo docker compose pull;
       sudo docker compose up -d"
   rules:
-    - if: '$MODE == "deploy"'
+    - if: '$DEPLOY_MODE == "deploy"'
       when: manual
   tags:
     - runner
@@ -155,7 +155,7 @@ rollback:job:
         docker compose up -d --force-recreate
       "
   rules:
-    - if: '$MODE == "rollback"'
+    - if: '$DEPLOY_MODE == "rollback"'
       when: manual
     - when: never
   tags:
@@ -185,8 +185,8 @@ telegram_notify_success:job:
         -d parse_mode=Markdown
   when: on_success
   rules:
-    - if: '$MODE == "deploy"'
-    - if: '$MODE == "rollback"'
+    - if: '$DEPLOY_MODE == "deploy"'
+    - if: '$DEPLOY_MODE == "rollback"'
   tags:
     - runner
 
@@ -211,7 +211,7 @@ telegram_notify_failure:job:
         -d text="${TEXT}" \
   when: on_failure
   rules:
-    - if: '$MODE == "deploy"'
-    - if: '$MODE == "rollback"'
+    - if: '$DEPLOY_MODE == "deploy"'
+    - if: '$DEPLOY_MODE == "rollback"'
   tags:
     - runner

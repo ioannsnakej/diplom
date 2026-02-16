@@ -44,7 +44,6 @@ variables:
   TF_ROOT: "terraform"
   PLAN_FILE: "deploy.tfplan-${CI_COMMIT_SHORT_SHA}"
   API_URL: "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage"
-  MODE: $[[ inputs.mode ]]
 
 linter:job:
   stage: lint-tf
@@ -59,7 +58,7 @@ linter:job:
     - tflint
   allow_failure: true
   rules:
-    - if: '$MODE == "apply"'    
+    - if: '$INFRA_MODE == "apply"'    
   tags:
     - runner
 
@@ -75,7 +74,7 @@ validate:job:
   script:
     - terraform -chdir=$TF_ROOT validate
   rules:
-    - if: '$MODE == "apply"' 
+    - if: '$INFRA_MODE == "apply"'
   tags:
     - runner
 
@@ -100,7 +99,7 @@ plan:job:
       - ${TF_ROOT}/${PLAN_FILE}
     expire_in: 1 hour
   rules:
-    - if: '$MODE == "apply"' 
+    - if: '$INFRA_MODE == "apply"' 
   tags:
     - runner
 
@@ -131,7 +130,7 @@ apply:job:
     - PUB_IP=$(cat instance_ip.txt)
     - *notify
   rules:
-    - if: '$MODE == "apply"' 
+    - if: '$INFRA_MODE == "apply"'
       when: manual      
   tags:
     - runner
@@ -153,7 +152,7 @@ destroy:job:
   after_script:
     - *notify
   rules:
-    - if: '$MODE == "destroy"' 
+    - if: '$INFRA_MODE == "destroy"' 
       when: manual
   tags:
     - runner
@@ -165,5 +164,6 @@ trigger-deploy:job:
       - local: 'deployment/deploy.yml'
   variables:
     HOST: $PUB_IP
+    DEPLOY_MODE: "deploy"
   rules:
-    - if: '$MODE == "apply"'
+    - if: '$INFRA_MODE == "apply"'
