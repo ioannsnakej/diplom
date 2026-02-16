@@ -66,10 +66,10 @@ linter:job:
 validate:job:
   stage: validate
   image:
-  name: hashicorp/terraform:1.6
-  entrypoint:
-    - "/usr/bin/env"
-    - "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    name: hashicorp/terraform:1.6
+    entrypoint:
+      - "/usr/bin/env"
+      - "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
   before_script:
     - *terraform-init
   script:
