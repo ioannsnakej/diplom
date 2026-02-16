@@ -10,6 +10,20 @@ spec:
       type: string
       default: ""
 ---
+stages:
+  - lint-tf
+  - validate
+  - plan
+  - apply
+  - destroy
+  - run-deploy
+  - lint-app
+  - build
+  - test
+  - prepare
+  - deploy
+  - rollback
+  - notify
 
 variables:
   TAG: $[[ inputs.tag ]]

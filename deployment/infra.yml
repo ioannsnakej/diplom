@@ -46,14 +46,6 @@ image:
       -d chat_id=$TELEGRAM_CHAT_ID \
       -d text="$TEXT" || true
 
-stages:
-  - lint-tf
-  - validate
-  - plan
-  - apply
-  - destroy
-  - run-deploy
-
 variables:
   TF_ROOT: "terraform"
   PLAN_FILE: "deploy.tfplan-${CI_COMMIT_SHORT_SHA}"
