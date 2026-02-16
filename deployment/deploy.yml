@@ -7,6 +7,15 @@
     - cat "$SSH_KEY" | ssh-add -
     - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
 
+stages:
+  - lint-app
+  - build
+  - test
+  - prepare
+  - deploy
+  - rollback
+  - notify
+
 variables:
   REGISTRY: https://index.docker.io/v1/
   DOCKER_REPO: ivankhodyrev/bookstore-app
