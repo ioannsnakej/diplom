@@ -91,7 +91,7 @@ test:job:
 
 prepare:job:
   stage: prepare
-  extends: .ssh_setup
+  extends: .gitlab-ci.yml/.ssh_setup
   before_script:
     - export HOST=$(cat terraform/instance_ip.txt)
   script:
@@ -121,7 +121,7 @@ deploy-compose:job:
   needs: 
     - job: prepare:job
       optional: true
-  extends: .ssh_setup
+  extends: .gitlab-ci.yml/.ssh_setup
   before_script:
     - export HOST=$(cat terraform/instance_ip.txt)
   script:
@@ -137,7 +137,7 @@ deploy-compose:job:
 
 rollback:job:
   stage: rollback
-  extends: .ssh_setup
+  extends: .gitlab-ci.yml/.ssh_setup
   before_script:
     - export HOST=$(cat terraform/instance_ip.txt)
   script:

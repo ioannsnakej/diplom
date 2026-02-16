@@ -101,7 +101,7 @@ plan:job:
 apply:job:
   stage: apply
   dependencies: ["plan:job"]
-  extends: .ssh_setup
+  extends: .gitlab-ci.yml/.ssh_setup
   before_script:
     - apk update && apk add ansible coreutils bash curl
     - *terraform-init
