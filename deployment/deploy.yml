@@ -100,9 +100,10 @@ prepare:job:
   stage: prepare
   image: docker:28.4.0
   extends: .ssh_setup
+  before_script:
+    - export PUB_IP=cat ${PUB_IP}
   script:
     - |
-      cat ${PUB_IP}
       ssh ${SSH_USER}@${PUB_IP} "
         test -d /var/www || sudo mkdir -p /var/www;
         sudo chown -R gitlab-runner:gitlab-runner /var/www;
@@ -130,6 +131,8 @@ deploy-compose:job:
     - job: prepare:job
       optional: true
   extends: .ssh_setup
+  before_script:
+    - export PUB_IP=cat ${PUB_IP}
   script:
     - |
       ssh ${SSH_USER}@${PUB_IP} "cd ${PRJ_DIR}; 
@@ -145,6 +148,8 @@ rollback:job:
   stage: rollback
   image: docker:28.4.0
   extends: .ssh_setup
+  before_script:
+    - export PUB_IP=cat ${PUB_IP}
   script:
     - |
       ssh ${SSH_USER}@${PUB_IP} "
