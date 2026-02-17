@@ -30,6 +30,8 @@ variables:
   DB_USER: bookstoreuser
   DB_NAME: bookstore
   DB_HOST: bookstore-db
+  PUB_IP: ${PUB_IP}
+  DEPLOY_MODE: ${MODE}
 
 linter-app:job:
   stage: lint-app
@@ -39,7 +41,7 @@ linter-app:job:
   script:
     - pylint ./app/*.py
   rules:
-    - if: '$MODE == "deploy"'
+    - if: '$DEPLOY_MODE == "deploy"'
   allow_failure: true
   tags:
     - runner
@@ -50,7 +52,7 @@ linter-docker:job:
   script:
     - hadolint Dockerfile
   rules:
-    - if: '$MODE == "deploy"'
+    - if: '$DEPLOY_MODE == "deploy"'
   allow_failure: true
   tags:
     - runner
@@ -64,7 +66,7 @@ build:job:
     - echo "{\"auths\":{\"$REGISTRY\":{\"username\":\"$DOCKER_USER\",\"password\":\"$DOCKER_TOKEN\"}}}" > /kaniko/.docker/config.json
     - /kaniko/executor --context=$CI_PROJECT_DIR --dockerfile=$CI_PROJECT_DIR/Dockerfile --destination=${IMAGE_TAG}
   rules:
-    - if: '$MODE == "deploy"'
+    - if: '$DEPLOY_MODE == "deploy"'
   tags:
     - runner
 
@@ -89,7 +91,7 @@ test:job:
   script:
     - pytest -v --disable-warnings --maxfail=1 ./app/tests_app.py | tee bookstore-tests_${CI_PIPELINE_ID}.log
   rules:
-    - if: '$MODE == "deploy"'
+    - if: '$DEPLOY_MODE == "deploy"'
   artifacts:
     paths:
       - bookstore-tests_${CI_PIPELINE_ID}.log
@@ -101,7 +103,7 @@ prepare:job:
   image: docker:28.4.0
   extends: .ssh_setup
   before_script:
-    - export PUB_IP=cat ${PUB_IP}
+    - export PUB_IP=${PUB_IP}
   script:
     - |
       ssh ${SSH_USER}@${PUB_IP} "
@@ -120,7 +122,7 @@ prepare:job:
         grep -q '^DB_HOST=' .env || echo "DB_HOST=${DB_HOST}" >> .env ;
       "
   rules:
-    - if: '$MODE == "deploy"'
+    - if: '$DEPLOY_MODE == "deploy"'
   tags:
     - runner
 
@@ -132,14 +134,14 @@ deploy-compose:job:
       optional: true
   extends: .ssh_setup
   before_script:
-    - export PUB_IP=cat ${PUB_IP}
+    - export PUB_IP=${PUB_IP}
   script:
     - |
       ssh ${SSH_USER}@${PUB_IP} "cd ${PRJ_DIR}; 
       sudo docker compose pull;
       sudo docker compose up -d"
   rules:
-    - if: '$MODE == "deploy"'
+    - if: '$DEPLOY_MODE == "deploy"'
       when: manual
   tags:
     - runner
@@ -149,7 +151,7 @@ rollback:job:
   image: docker:28.4.0
   extends: .ssh_setup
   before_script:
-    - export PUB_IP=cat ${PUB_IP}
+    - export PUB_IP=${PUB_IP}
   script:
     - |
       ssh ${SSH_USER}@${PUB_IP} "
@@ -164,7 +166,7 @@ rollback:job:
         docker compose up -d --force-recreate
       "
   rules:
-    - if: '$MODE == "rollback"'
+    - if: '$DEPLOY_MODE == "rollback"'
       when: manual
     - when: never
   tags:
@@ -175,7 +177,7 @@ telegram_notify_success:job:
   image: curlimages/curl
   before_script: |
     export URL=${API_URL}
-    if [ "$MODE" == "rollback" ]; then
+    if [ "$DEPLOY_MODE" == "rollback" ]; then
       export MODE="Rollback"
       export VERSION="${DOCKER_REPO}:${TAG}"
       export EMOJI="⬅️"
@@ -204,7 +206,7 @@ telegram_notify_failure:job:
   image: curlimages/curl
   before_script: |
     export URL=${API_URL}
-    if [ "$MODE" == "rollback" ]; then
+    if [ "$DEPLOY_MODE" == "rollback" ]; then
       export MODE="Rollback"
       export EMOJI="❌"
     else
@@ -220,7 +222,7 @@ telegram_notify_failure:job:
         -d text="${TEXT}" \
   when: on_failure
   rules:
-    - if: '$MODE == "deploy"'
-    - if: '$MODE == "rollback"'
+    - if: '$DEPLOY_MODE == "deploy"'
+    - if: '$DEPLOY_MODE == "rollback"'
   tags:
     - runner

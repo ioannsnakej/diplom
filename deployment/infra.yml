@@ -119,7 +119,7 @@ apply:job:
   script:
     - terraform -chdir=$TF_ROOT apply -input=false ${PLAN_FILE}
     - terraform -chdir=$TF_ROOT output -raw instance_ip > instance_ip.txt
-    - echo "PUB_IP=$(cat instance_ip.txt)"
+    - export "PUB_IP=$(cat instance_ip.txt)" > deploy.env 
     - |
       curl --request PUT --header "PRIVATE-TOKEN: ${GITLAB_API_TOKEN}" \
         "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/variables/PUB_IP" \
@@ -130,6 +130,8 @@ apply:job:
   artifacts:
     paths:
       - instance_ip.txt
+    reports:
+      dotenv: deploy.env
   after_script:
     - PUB_IP=$(cat instance_ip.txt)
     - *notify
@@ -163,11 +165,13 @@ destroy:job:
 
 trigger-deploy:job:
   stage: run-deploy
+  needs: ["apply:job"]
+  rules:
+    - if: '$MODE == "apply"'
+      when: on_success
   trigger:
     include:
       - local: 'deployment/deploy.yml'
   variables:
-    MODE: "deploy"
+    DEPLOY_MODE: "deploy"
     PUB_IP: ${PUB_IP}
-  rules:
-    - if: '$MODE == "deploy"'
