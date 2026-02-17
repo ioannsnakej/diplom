@@ -177,7 +177,7 @@ rollback:job:
       ssh ${SSH_USER}@${HOST} "
         if [ -z "${TAG}" ]; then
           echo "TAG is missing. Usage: TAG for rollback"
-          exit
+          exit 1
         fi
         cd ${PRJ_DIR}; 
         test -f .env || touch .env
