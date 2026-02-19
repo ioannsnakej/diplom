@@ -26,7 +26,7 @@ workflow:
 
 .ssh_setup:
   before_script:
-    - apk update && apk add openssh-client rsync bash
+    - apk update && apk add openssh-client rsync bash curl
     - eval "$(ssh-agent -s)"
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
@@ -149,8 +149,6 @@ test:job:
 prepare:job:
   stage: prepare
   extends: .ssh_setup
-  before_script:
-    - apk update && apk add curl bash --no-cache
   script:
     - |
       ssh ${SSH_USER}@${HOST} "
@@ -181,8 +179,6 @@ deploy-compose:job:
     - job: prepare:job
       optional: true
   extends: .ssh_setup
-  before_script:  
-    - apk update && apk add curl bash --no-cache
   script:
     - |
       ssh ${SSH_USER}@${HOST} "cd ${PRJ_DIR}; 
@@ -199,8 +195,6 @@ deploy-compose:job:
 rollback:job:
   stage: rollback
   extends: .ssh_setup
-  before_script:  
-    - apk update && apk add curl bash --no-cache
   script:
     - |
       if [ -z "${TAG}" ]; then
