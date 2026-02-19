@@ -33,6 +33,26 @@ workflow:
     - cat "$SSH_KEY" | ssh-add -
     - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
 
+.notify: &notify
+  - |
+    if [ "$CI_JOB_STATUS" == "success" ]; then
+      EMOJI="✅"
+      STATUS="success"
+     else
+      EMOJI="❌"
+      STATUS="failed"
+    fi
+    TEXT="${EMOJI} Job ${CI_JOB_NAME} ${STATUS}%0APipeline: ${CI_PIPELINE_URL}"
+    if [ "$CI_JOB_STAGE" == "prepare" ] && [ "$CI_JOB_STATUS" == "success" ]; then
+      TEXT="${TEXT}.%0A⚠️Please cheak and approve run-deploy"
+    fi
+    if [ "$CI_JOB_STAGE" == "deploy" ] && [ "$CI_JOB_STATUS" == "success" ]; then
+      TEXT="${TEXT}.%0AYour app is ready: http://${HOST}:8000"
+    fi
+    curl -X POST ${API_URL} \
+      -d chat_id=$TELEGRAM_CHAT_ID \
+      -d text="$TEXT" || true
+
 stages:
   - linting
   - build
@@ -49,7 +69,7 @@ variables:
   TAG: $[[ inputs.tag ]]
   RUN_TESTS: $[[ inputs.tests ]]
   DEPLOY_MODE: $[[ inputs.mode ]]
-  HOST: 51.250.106.143
+  HOST: 84.201.136.12
   SSH_OPT: -o StrictHostKeyChecking=no
   SSH_USER: gitlab-runner
   PRJ_DIR: /var/www/bookstore-app
@@ -94,6 +114,8 @@ build:job:
   script:
     - echo "{\"auths\":{\"$REGISTRY\":{\"username\":\"$DOCKER_USER\",\"password\":\"$DOCKER_TOKEN\"}}}" > /kaniko/.docker/config.json
     - /kaniko/executor --context=$CI_PROJECT_DIR --dockerfile=$CI_PROJECT_DIR/Dockerfile --destination=${IMAGE_TAG}
+  after_script:
+    - *notify
   rules:
     - if: '$DEPLOY_MODE == "deploy"'
   tags:
@@ -121,6 +143,8 @@ test:job:
     - pytest -v --disable-warnings --maxfail=1 ./app/tests_app.py | tee bookstore-tests_${CI_PIPELINE_ID}.log
   rules:
     - if: '$DEPLOY_MODE == "deploy"'
+  after_script:
+    - *notify
   artifacts:
     paths:
       - bookstore-tests_${CI_PIPELINE_ID}.log
@@ -147,6 +171,8 @@ prepare:job:
         grep -q '^DB_NAME=' .env || echo "DB_NAME=${DB_NAME}" >> .env ;
         grep -q '^DB_HOST=' .env || echo "DB_HOST=${DB_HOST}" >> .env ;
       "
+  after_script:
+    - *notify
   rules:
     - if: '$DEPLOY_MODE == "deploy"'
   tags:
@@ -163,6 +189,8 @@ deploy-compose:job:
       ssh ${SSH_USER}@${HOST} "cd ${PRJ_DIR}; 
       sudo docker compose pull;
       sudo docker compose up -d"
+  after_script:
+    - *notify
   rules:
     - if: '$DEPLOY_MODE == "deploy"'
       when: manual
@@ -185,64 +213,11 @@ rollback:job:
         echo -e \"\nAPP_IMAGE=${DOCKER_REPO}:${TAG}\" >> .env
         sudo docker compose up -d --force-recreate
       "
+  after_script:
+    - *notify
   rules:
     - if: '$DEPLOY_MODE == "rollback"'
       when: manual
     - when: never
-  tags:
-    - runner
-
-telegram_notify_success:job:
-  stage: notify
-  image: curlimages/curl
-  before_script: |
-    export URL=${API_URL}
-    if [ "$DEPLOY_MODE" == "rollback" ]; then
-      export MODE="Rollback"
-      export VERSION="${DOCKER_REPO}:${TAG}"
-      export EMOJI="⬅️"
-    else
-      export MODE="Deploy"
-      export VERSION="${IMAGE_TAG}"
-      export EMOJI="✅"
-    fi
-    
-    export TEXT="${EMOJI} ${MODE} for ${CI_PROJECT_NAME} by ${GITLAB_USER_NAME}%0AVersion: ${VERSION}%0APipeline: ${CI_PIPELINE_URL}"
-  script:
-    - |
-      curl -s -X POST ${URL} \
-        -d chat_id=${TELEGRAM_CHAT_ID} \
-        -d text="${TEXT}" \
-        -d parse_mode=Markdown
-  when: on_success
-  rules:
-    - if: '$DEPLOY_MODE == "deploy"'
-    - if: '$DEPLOY_MODE == "rollback"'
-  tags:
-    - runner
-
-telegram_notify_failure:job:
-  stage: notify
-  image: curlimages/curl
-  before_script: |
-    export URL=${API_URL}
-    if [ "$DEPLOY_MODE" == "rollback" ]; then
-      export MODE="Rollback"
-      export EMOJI="❌"
-    else
-      export MODE="Build"
-      export EMOJI="❌"
-    fi
-    
-    export TEXT="${EMOJI} ${MODE} for ${CI_PROJECT_NAME} by ${GITLAB_USER_NAME} failed on branch *${CI_COMMIT_BRANCH}*:%0AJob: ${CI_JOB_NAME}%0APipeline: ${CI_PIPELINE_URL}"
-  script:
-    - |
-      curl -s -X POST ${URL} \
-        -d chat_id=${TELEGRAM_CHAT_ID} \
-        -d text="${TEXT}" \
-  when: on_failure
-  rules:
-    - if: '$DEPLOY_MODE == "deploy"'
-    - if: '$DEPLOY_MODE == "rollback"'
   tags:
     - runner
