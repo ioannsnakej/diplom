@@ -26,7 +26,7 @@ workflow:
 
 .ssh_setup:
   before_script:
-    - apk update && apk add openssh-client rsync bash curl
+    - apk update && apk add openssh-client rsync bash
     - eval "$(ssh-agent -s)"
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
@@ -166,6 +166,7 @@ prepare:job:
         grep -q '^DB_HOST=' .env || echo "DB_HOST=${DB_HOST}" >> .env ;
       "
   after_script:
+    - apk add curl --no-cache
     - *notify
   rules:
     - if: '$DEPLOY_MODE == "deploy"'
@@ -184,6 +185,7 @@ deploy-compose:job:
       sudo docker compose pull;
       sudo docker compose up -d"
   after_script:
+    - apk add curl --no-cache
     - *notify
   rules:
     - if: '$DEPLOY_MODE == "deploy"'
@@ -208,6 +210,7 @@ rollback:job:
         sudo docker compose up -d --force-recreate
       "
   after_script:
+    - apk add curl --no-cache
     - *notify
   rules:
     - if: '$DEPLOY_MODE == "rollback"'
