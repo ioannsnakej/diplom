@@ -4,7 +4,7 @@
 ![notify](/attachments/app.png)
 
 Проект состоит из двух репозиториев:
-- **[bookstore-app-ci-cd](https://gitlab.com/khodyrev-ivan/IaC-terraform-ansible)** — код приложения и его CI/CD пайплайн
+- **[bookstore-app-ci-cd](https://gitlab.com/khodyrev-ivan/bookstore-app-ci-cd)** — код приложения и его CI/CD пайплайн
 - **[IaC-terraform-ansible](https://gitlab.com/khodyrev-ivan/IaC-terraform-ansible)** — инфраструктурный код для создания ВМ в Yandex Cloud
 
 ## Требования
